@@ -1,0 +1,6 @@
+0 = almost always
+1 = often
+2 = about half the time
+3 = occasionally
+4 = seldom
+5 = never
