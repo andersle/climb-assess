@@ -263,7 +263,7 @@ def plot_results_categories(results, mapping):
         )
 
 
-def plot_results_low_questions(results, questions, mapping):
+def table_results_low_questions(results, questions, mapping):
     """Show low-scoring questions."""
     for result in results:
         time = result['time']
@@ -282,6 +282,41 @@ def plot_results_low_questions(results, questions, mapping):
             title = 'Lowest scoring in category "{}"'.format(CATEGORIES[i])
             table = generate_rst_table(
                 low[i], title, ['ID', 'Question', 'Answer']
+            )
+            for row in table:
+                print(row)
+
+
+def table_results_all_questions(results, questions, mapping):
+    """Show answers to all questions."""
+    for result in results:
+        time = result['time']
+        print()
+        print(
+            'Results for questions on {}'.format(time.strftime(_DATE_FMT))
+        )
+        answers = []
+        categories = {}
+        for idx in sorted(result['result_q']):
+            answer = result['result_q'][idx]
+            category = mapping[idx]
+            if category not in categories:
+                categories[category] = []
+            ans = str(answer)
+            if answer <= 3:
+                ans += '*'
+            categories[category].append((str(idx), questions[idx], ans))
+            answers.append((str(idx), questions[idx], ans))
+        title = 'Answers for questions'
+        table = generate_rst_table(
+            answers, title, ['ID', 'Question', 'Answer']
+        )
+        for row in table:
+            print(row)
+        for i in sorted(categories):
+            title = 'Answers for category "{}"'.format(CATEGORIES[i])
+            table = generate_rst_table(
+                categories[i], title, ['ID', 'Question', 'Answer']
             )
             for row in table:
                 print(row)
@@ -347,7 +382,8 @@ def main():
     plot_score_questions(results)
     plot_results_questions(results, mapping)
     plot_results_categories(results, mapping)
-    plot_results_low_questions(results, questions, mapping)
+    table_results_low_questions(results, questions, mapping)
+    table_results_all_questions(results, questions, mapping)
 
 
 if __name__ == '__main__':
