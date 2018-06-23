@@ -17,6 +17,13 @@ COLORS = {
 }
 
 
+CATEGORIES = {
+    'mental': 'Mental',
+    'technique': 'Technique and Tactics',
+    'physical': 'Physical',
+}
+
+
 def read_questions(filename):
     """Read questions from the given file.
 
@@ -231,6 +238,7 @@ def plot_results_questions(results, mapping):
 
 
 def plot_results_categories(results, mapping):
+    """Plot over-all results for categories."""
     for result in results:
         time = result['time']
         results_c = {}
@@ -259,6 +267,7 @@ def plot_results_low_questions(results, questions, mapping):
     """Show low-scoring questions."""
     for result in results:
         time = result['time']
+        print()
         print(
             'Results for questions on {}'.format(time.strftime(_DATE_FMT))
         )
@@ -268,16 +277,70 @@ def plot_results_low_questions(results, questions, mapping):
             if answer <= 3:
                 if category not in low:
                     low[category] = []
-                low[category].append((idx, questions[idx], answer))
+                low[category].append((str(idx), questions[idx], str(answer)))
         for i in sorted(low.keys()):
-            print('* {}:'.format(i))
-            for idx, question, answer in low[i]:
-                print('\t {} {} {}'.format(idx, question, answer))
+            title = 'Lowest scoring in category "{}"'.format(CATEGORIES[i])
+            table = generate_rst_table(
+                low[i], title, ['ID', 'Question', 'Answer']
+            )
+            for row in table:
+                print(row)
+
+
+def generate_rst_table(table, title, headings):
+    """Generate reStructuredText for a table.
+
+    This is a general function to generate a table in reStructuredText.
+    The table is specified with a title, headings for the columns and
+    the contents of the columns and rows.
+
+    Parameters
+    ----------
+    table : list of lists
+        `table[i][j]` is the contents of column `j` of row `i` of the
+        table.
+    title : string
+        The header/title for the table.
+    headings : list of strings
+        These are the headings for each table column.
+    """
+    # for each column, we need to figure out how wide it should be
+    # 1) Check headings
+    col_len = [len(col) + 2 for col in headings]
+    # 2) Check if some of the columns are wider
+    for row in table:
+        for i, col in enumerate(row):
+            if len(col) >= col_len[i] - 2:
+                col_len[i] = len(col) + 2  # add some extra space
+
+    width = len(col_len) + sum(col_len) - 1
+    topline = '+' + width * '-' + '+'
+    # create the header
+    str_header = '|{{0:<{0}s}}|'.format(width)
+    str_header = str_header.format(title)
+    # make format for header:
+    head_fmt = ['{{0:^{0}s}}'.format(col) for col in col_len]
+    # create first row, which is the header on columns:
+    row_line = [fmt.format(col) for fmt, col in zip(head_fmt, headings)]
+    row_line = [''] + row_line + ['']
+    row_line = '|'.join(row_line)
+    # also set-up the horizontal line:
+    hline = [''] + [col * '-' for col in col_len] + ['']
+    hline = '+'.join(hline)
+    # generate table
+    str_table = [topline, str_header, hline, row_line, hline.replace('-', '=')]
+    for row in table:
+        row_line = [fmt.format(col) for fmt, col in zip(head_fmt, row)]
+        row_line = [''] + row_line + ['']
+        row_line = '|'.join(row_line)
+        str_table.extend([row_line, hline])
+    return str_table
 
 
 def main():
+    """Run the application."""
     questions, mapping = read_questions('questions.txt')
-    scorings = read_scorings('scoring.txt')
+    # scorings = read_scorings('scoring.txt')
     # result_q, result_c, time = ask_questions(questions, scorings, mapping)
     # store_results('results.txt', result_q, time)
     results = read_results('results.txt', mapping)
